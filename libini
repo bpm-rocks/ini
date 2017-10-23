@@ -1,0 +1,201 @@
+#!/usr/bin/env bash
+
+. bpm
+bpm::include array
+bpm::include assign
+bpm::include string
+bpm::include is
+
+
+# Retrieves a list of sections, list of keys, or a key's value.
+#
+# $1 - Target variable.
+# $2 - Prefix, required.
+# $3 - Section, optional. Required if you want to access a key.
+# $4 - Key name, optional
+#
+# Examples
+#
+#   # Assume the following INI file:
+#   #
+#   # [sectionName]
+#   # keyName = theValue
+#
+#   ini::parse INI "$iniFileContents"
+#   ini::get target INI
+#   set | grep ^target=
+#   # target=([0]="" [1]="sectionName")
+#
+#   ini::get target INI sectionName
+#   set | grep ^target=
+#   # target=([0]="keyName")
+#
+#   ini::get target INI sectionName keyName
+#   # target="theValue"
+#
+# Returns nothing
+ini::get() {
+    local arg keyName target upper value
+
+    target=${1-}
+    upper=()
+    shift
+
+    for arg in "$@"; do
+        # Do not capitalize the first argument
+        if [[ "${#upper[@]}" -gt 0 ]]; then
+            string::toUpper arg "$arg"
+        fi
+
+        upper[${#upper[@]}]=$arg
+    done
+
+    # shellcheck disable=SC2068
+    ini::keyName keyName "${upper[@]}"
+
+    if [[ "$#" -lt 3 ]]; then
+        if [[ -z "${!keyName+_}" ]]; then
+            value=()
+        else
+            # shellcheck disable=SC1087
+            eval "value=( \${$keyName[@]+\"\${$keyName[@]}\"} )"
+        fi
+
+        # shellcheck disable=SC2068
+        local "$target" && assign::array "$target" ${value[@]+"${value[@]}"}
+    else
+        local "$target" && assign::value "$target" "${!keyName-}"
+    fi
+}
+
+
+# Encode a prefix, section and key in order to generate a safe variable name
+# for Bash. All section names and key names are case insensitive.
+#
+# $1 - Prefix, required.
+# $2 - Section, optional. Required if you want to access a key.
+# $3 - Key name, optional.
+ini::keyName() {
+    local name part target
+
+    target="$1"
+    shift
+    name="$1"
+
+    if [[ $# -gt 1 ]]; then
+        string::toHex part "$2"
+        name+="_$part"
+
+        if [[ $# -gt 2 ]]; then
+            string::toHex part "$3"
+            name+="_$part"
+        fi
+    fi
+
+    local "$target" && assign::value "$target" "$name"
+}
+
+
+# Parses an INI file into the environment.
+#
+# $1 - Prefix for environment variables that will be assigned.
+# $2 - INI file contents
+#
+# Variables are stored in memory, encoded in hex to ensure the variable names
+# are valid variables.
+#
+#   PREFIX=(array of unencoded section names)
+#   PREFIX_SECTIONENCODED=(array of unencoded key names)
+#   PREFIX_SECTIONENCODED_KEYENCODED=value
+#
+# You should not use these environment variables directly. Instead, use the
+# other utility functions to access the values.
+#
+#     $1: Prefix for variables.
+#     $2: INI file contents
+ini::parse() {
+    local encodedKey encodedSection key keys line oldIfs prefix section sections value
+
+    prefix=$1
+    sections=("")
+    section=
+    keys=()
+    ini::keyName encodedSection "$prefix" "$section"
+    oldIfs=$IFS
+    IFS=$'\n'
+
+    while read line; do
+        string::trim line "$line"
+
+        #: Eliminate comments starting with # or ;
+        line=${line#\#*}
+        line=${line#;*}
+
+        if [[ "${line:0:1}" == '[' ]] && [[ "${line:${#line}-1}" == "]" ]]; then
+            #: Remove brackets
+            line=${line:1:${#line}-2}
+
+            # Save the previously loaded section
+            # shellcheck disable=SC2068
+            assign::array "$encodedSection" ${keys[@]+"${keys[@]}"}
+
+            string::trim section "$line"
+            string::toUpper section "$section"
+            ini::keyName encodedSection "$prefix" "$section"
+
+            # shellcheck disable=SC2068
+            if ! array::contains "$section" ${sections[@]+"${sections[@]}"}; then
+                # Track the new section
+                sections[${#sections[@]}]=$section
+                keys=()
+            else
+                # Load the repeated section. Sorry for the eval.
+                # shellcheck disable=SC1087
+                eval "keys=( \${$encodedSection[@]+\"\${$encodedSection[@]}\"} )"
+            fi
+        elif [[ -n "$line" ]]; then
+            IFS="=" read key value <<< "$line"
+            string::trim key "$key"
+            string::toUpper key "$key"
+
+            if [[ -n "$key" ]]; then
+                string::trim value "$value"
+                ini::keyName encodedKey "$prefix" "$section" "$key"
+                assign::value "$encodedKey" "$value"
+
+                # shellcheck disable=SC2068
+                if ! array::contains "$key" ${keys[@]+"${keys[@]}"}; then
+                    keys[${#keys[@]}]=$key
+                fi
+            fi
+        fi
+    done <<< "$2"
+
+    IFS=$oldIfs
+
+    # shellcheck disable=SC2068
+    assign::array "$encodedSection" ${keys[@]+"${keys[@]}"}
+
+    # shellcheck disable=SC2068
+    assign::array "$prefix" ${sections[@]+"${sections[@]}"}
+}
+
+
+# Generates a unique INI file prefix that has not yet been used.
+#
+# $1 - Destination variable name for the INI prefix.
+#
+# Returns nothing.
+ini::prefix() {
+    local prefix
+
+    #: 1 in 32k
+    prefix="ini_${RANDOM}"
+
+    while is::set "$prefix"; do
+        #: 1 in 1 billion
+        prefix="ini_${RANDOM}_${RANDOM}"
+    done
+
+    local "$1" && assign::value "$1" "$prefix"
+}

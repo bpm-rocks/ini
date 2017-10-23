@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+. bpm
+bpm::include ini
+
+# Go to the script's folder
+cd "${0%/*}"
+
+# Get a unique prefix for loading the file.
+declare prefix
+ini::prefix prefix
+
+# Load the file into memory.
+ini::parse "$prefix" "$(cat ./test.ini)"
+
+# Get the list of section names.
+ini::get sectionNames "$prefix"
+set | grep ^sectionNames=
+# sectionNames=([0]="" [1]="SECTION NAME")
+
+# Get the keys, note that the section is not case sensitive.
+ini::get keys "$prefix" "section name"
+set | grep ^keys=
+# keys=([0]="KEY1" [1]="KEY 2")
+
+# Get the values and note that keys are not case sensitive.
+ini::get key1 "$prefix" "section name" KEY1
+set | grep ^key1=
+# key1=value1
+ini::get key2 "$prefix" "section name" "Key 2"
+set | grep ^key2=
+# key2='value 2'

@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+. bpm
+bpm::include unittest
+unittest::run
+
+unittest::setup() {
+    . ../libini
+}
+
+unittest::case::only-prefix() {
+    local result
+
+    ini::keyName result ini || return 1
+    [[ "$result" == "ini" ]]
+}
+
+unittest::case::only-prefix-caps() {
+    local result
+
+    ini::keyName result INI || return 1
+    [[ "$result" == "INI" ]]
+}
+
+unittest::case::section() {
+    local result
+
+    ini::keyName result ini sec || return 1
+    # This function's responsibility does not include changing key labels
+    # to upper case.
+    [[ "$result" == "ini_736563" ]]
+}
+
+unittest::case::section-caps() {
+    local result
+
+    ini::keyName result INI SEC || return 1
+    [[ "$result" == "INI_534543" ]]
+}
+
+unittest::case::key() {
+    local result
+
+    ini::keyName result ini sec key || return 1
+
+    # This function's responsibility does not include changing key labels
+    # to upper case.
+    [[ "$result" == "ini_736563_6b6579" ]]
+}
+
+unittest::case::key-cap() {
+    local result
+
+    ini::keyName result INI SEC KEY || return 1
+    [[ "$result" == "INI_534543_4b4559" ]]
+}

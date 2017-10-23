@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+. bpm
+bpm::include unittest
+unittest::run
+
+unittest::setup() {
+    . ../libini
+
+    # Resetting RANDOM=0 makes the next few random numbers very predictable.
+    # 20034 24315 12703 22240 10073 18561 20058
+    RANDOM=0
+}
+
+unittest::case::first-prefix() {
+    local prefix
+
+    ini::prefix prefix
+    [[ "$prefix" == "ini_20034" ]]
+}
+
+unittest::case::second-prefix() {
+    local prefix
+
+    # Force a first level conflict
+    ini_20034=true
+    ini::prefix prefix
+    [[ "$prefix" == ini_24315_12703 ]]
+}
+
+unittest::case::third-prefix() {
+    local prefix
+
+    # Force two collisions in a row
+    # shellcheck disable=SC2034
+    ini_20034=true
+
+    # shellcheck disable=SC2034
+    ini_24315_12703=true
+    ini::prefix prefix
+    [[ "$prefix" == ini_22240_10073 ]]
+}

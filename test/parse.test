@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+. bpm
+bpm::include unittest
+unittest::run
+
+unittest::setup() {
+    . ../libini
+}
+
+unittest::case::empty() {
+    local result
+
+    ini::parse ini ""
+    ini::get result ini
+    [[ "${#result[@]}" -eq 1 ]] || return 1
+    [[ "${result[0]}" == "" ]] || return 1
+
+    ini::get result ini ""
+    [[ "${#result[@]}" -eq 0 ]]
+}
+
+unittest::case::simple() {
+    local result
+
+    ini::parse ini "$(cat simple.ini)"
+    ini::get result ini
+    [[ "${#result[@]}" -eq 2 ]] || return 1
+    [[ "${result[0]}" == "" ]] || return 1
+    [[ "${result[1]}" == "DEFAULT" ]] || return 1
+
+    ini::get result ini default
+    [[ "${#result[@]}" -eq 1 ]] || return 1
+    [[ "${result[0]}" == "KEY" ]] || return 1
+
+    ini::get result ini default key
+    [[ "$result" == "value" ]]
+}
+
+unittest::case::repeat() {
+    local result
+
+    ini::parse ini "$(cat repeat.ini)"
+    ini::get result ini section
+    [[ "${#result[@]}" -eq 3 ]] || return 1
+    [[ "${result[0]}" == "KEY1" ]] || return 1
+    [[ "${result[1]}" == "KEY2" ]] || return 1
+    [[ "${result[2]}" == "KEY4" ]] || return 1
+
+    ini::get result ini section key1
+    [[ "$result" == "value2" ]] || return 1
+}
+
+unittest::case::torture() {
+    ini::parse ini "$(cat torture.ini)"
+    ini::get result ini equals key
+    [[ "$result" == "value=value" ]] || return 1
+    ini::get result ini "pound comment" key
+    [[ "$result" == "value # value" ]] || return 1
+    ini::get result ini "semicolon comment" key
+    [[ "$result" == "value ; value" ]] || return 1
+    ini::get result ini spaces key
+    [[ "$result" == "value" ]] || return 1
+}

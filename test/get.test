@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+. bpm
+bpm::include unittest
+unittest::run
+
+unittest::setup() {
+    . ../libini
+    bpm::include is
+}
+
+unittest::case::get-empty-section-list() {
+    local result
+
+    ini::get result x || return 1
+    is::array result || return 1
+    [[ "${#result[@]}" -eq 0 ]]
+}
+
+unittest::case::get-section-list() {
+    local result
+
+    export ini=("" ONE "TWO 2")
+    ini::get result ini
+    is::array result || return 1
+    [[ "${#result[@]}" -eq 3 ]] || return 1
+    [[ "${result[0]}" == "" ]] || return 1
+    [[ "${result[1]}" == "ONE" ]] || return 1
+    [[ "${result[2]}" == "TWO 2" ]]
+}
+
+unittest::case::get-empty-key-list() {
+    local result
+
+    # Set a fake entry for the section SEC
+    export ini_534543=()
+    ini::get result ini sec || return 1
+    is::array result || return 1
+    [[ "${#result[@]}" -eq 0 ]]
+}
+
+unittest::case::get-key-list() {
+    local result
+
+    # Set a fake entry for the section SEC
+    export ini_534543=(THING "LONG THING")
+    ini::get result ini sec
+    is::array result || return 1
+    [[ "${#result[@]}" -eq 2 ]] || return 1
+    [[ "${result[0]}" == "THING" ]] || return 1
+    [[ "${result[1]}" == "LONG THING" ]]
+}
+
+unittest::case::get-empty-key() {
+    local result
+
+    result="not changed from before the call"
+    ini::get result ini sec key || return 1
+    [[ "$result" == "" ]]
+}
+
+unittest::case::get-key() {
+    local result
+
+    # Fakey entry for the INI file
+    export ini_534543_4b4559="the value"
+    result="not changed from before the call"
+    ini::get result ini sec key || return 1
+    [[ "$result" == "the value" ]]
+}
