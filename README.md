@@ -7,7 +7,7 @@ Read an INI file into memory. Additional functions allow you to get the list of 
 Installation
 ============
 
-Add to you `bpm.ini` file, the following dependency.
+Add to you `bpm.ini` file the following dependency.
 
     [dependencies]
     ini=*
