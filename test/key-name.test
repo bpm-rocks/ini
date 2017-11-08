@@ -25,9 +25,7 @@ unittest::case::section() {
     local result
 
     ini::keyName result ini sec || return 1
-    # This function's responsibility does not include changing key labels
-    # to upper case.
-    [[ "$result" == "ini_736563" ]]
+    [[ "$result" == "ini_534543" ]]
 }
 
 unittest::case::section-caps() {
@@ -41,10 +39,7 @@ unittest::case::key() {
     local result
 
     ini::keyName result ini sec key || return 1
-
-    # This function's responsibility does not include changing key labels
-    # to upper case.
-    [[ "$result" == "ini_736563_6b6579" ]]
+    [[ "$result" == "ini_534543_4b4559" ]]
 }
 
 unittest::case::key-cap() {

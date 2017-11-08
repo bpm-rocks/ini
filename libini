@@ -35,23 +35,13 @@ bpm::include is
 #
 # Returns nothing
 ini::get() {
-    local arg keyName target upper value
+    local keyName target value
 
     target=${1-}
-    upper=()
     shift
 
-    for arg in "$@"; do
-        # Do not capitalize the first argument
-        if [[ "${#upper[@]}" -gt 0 ]]; then
-            string::toUpper arg "$arg"
-        fi
-
-        upper[${#upper[@]}]=$arg
-    done
-
     # shellcheck disable=SC2068
-    ini::keyName keyName "${upper[@]}"
+    ini::keyName keyName "$@"
 
     if [[ "$#" -lt 3 ]]; then
         if [[ -z "${!keyName+_}" ]]; then
@@ -72,7 +62,7 @@ ini::get() {
 # Encode a prefix, section and key in order to generate a safe variable name
 # for Bash. All section names and key names are case insensitive.
 #
-# $1 - Prefix, required.
+# $1 - Prefix for environment variables, required.
 # $2 - Section, optional. Required if you want to access a key.
 # $3 - Key name, optional.
 ini::keyName() {
@@ -83,11 +73,13 @@ ini::keyName() {
     name="$1"
 
     if [[ $# -gt 1 ]]; then
-        string::toHex part "$2"
+        string::toUpper part "$2"
+        string::toHex part "$part"
         name+="_$part"
 
         if [[ $# -gt 2 ]]; then
-            string::toHex part "$3"
+            string::toUpper part "$3"
+            string::toHex part "$part"
             name+="_$part"
         fi
     fi
@@ -140,7 +132,6 @@ ini::parse() {
             assign::array "$encodedSection" ${keys[@]+"${keys[@]}"}
 
             string::trim section "$line"
-            string::toUpper section "$section"
             ini::keyName encodedSection "$prefix" "$section"
 
             # shellcheck disable=SC2068
@@ -156,7 +147,6 @@ ini::parse() {
         elif [[ -n "$line" ]]; then
             IFS="=" read key value <<< "$line"
             string::trim key "$key"
-            string::toUpper key "$key"
 
             if [[ -n "$key" ]]; then
                 string::trim value "$value"
