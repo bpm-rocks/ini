@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+. bpm
+bpm::include unittest
+unittest::run
+
+unittest::setup() {
+    . ../libini
+    bpm::include is
+}
+
+unittest::case::get-key-list() {
+    local result
+
+    ini::parse ini "$(cat duplicate.ini)"
+    ini::get result ini test
+    is::array result || return 1
+    [[ "${#result[@]}" -eq 1 ]] || return 1
+    [[ "${result[0]}" == "item" ]]
+}
+
+unittest::case::get-duplicate-key() {
+    local result
+
+    ini::parse ini "$(cat duplicate.ini)"
+    ini::get result ini test item
+    is::array result || return 1
+    return 0
+    [[ "${#result[@]}" -eq 1 ]] || return 1
+    [[ "${result[0]}" == "item" ]]
+}

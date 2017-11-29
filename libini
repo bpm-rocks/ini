@@ -53,8 +53,10 @@ ini::get() {
 
         # shellcheck disable=SC2068
         local "$target" && assign::array "$target" ${value[@]+"${value[@]}"}
+    elif ! is::set "$keyName"; then
+        local "$target" && assign::value "$target" ""
     else
-        local "$target" && assign::value "$target" "${!keyName-}"
+        local "$target" && assign::byRef "$target" "$keyName"
     fi
 }
 
@@ -100,13 +102,28 @@ ini::keyName() {
 #   PREFIX_SECTIONENCODED=(array of unencoded key names)
 #   PREFIX_SECTIONENCODED_KEYENCODED=value
 #
-# You should not use these environment variables directly. Instead, use the
-# other utility functions to access the values.
+# Duplicted section names are merged together. Duplicated keys will have their
+# values changed into an array so all of the values will be captured. For
+# example, the INI on the left will be parsed into variables similar to the
+# right side. Keep in mind that section names and keys are case insensitive.
+#
+# [Section1]       PREFIX=(SECTION1 SECTION2
+# Key=value
+# kEy=value2       PREFIX_SECTION1=(KEY)
+#
+# [Section2]       PREFIX_SECTION2=(ANOTHER)
+# another=value
+#                  PREFIX_SECTION1_KEY=(value value2 value3)
+# [SECTION1]
+# KEY=value3       PREFIX_SECTION2_ANOTHER=value
+#
+# You should not use the generated environment variables directly. Instead, use
+# the other utility functions (eg. `ini::get`) to access the values.
 #
 #     $1: Prefix for variables.
 #     $2: INI file contents
 ini::parse() {
-    local encodedKey encodedSection key keys line oldIfs prefix section sections value
+    local encodedKey encodedSection key keys line oldIfs prefix previousValue section sections value
 
     prefix=$1
     sections=("")
@@ -151,7 +168,16 @@ ini::parse() {
             if [[ -n "$key" ]]; then
                 string::trim value "$value"
                 ini::keyName encodedKey "$prefix" "$section" "$key"
-                assign::value "$encodedKey" "$value"
+
+                if ! is::set "$encodedKey"; then
+                    assign::value "$encodedKey" "$value"
+                elif ! is::array "$encodedKey"; then
+                    assign::value previousValue "${!encodedKey}"
+                    assign::array "$encodedKey" "$previousValue" "$value"
+                else
+                    assign::byRef previousValue "$encodedKey"
+                    assign::array "$encodedKey" "${previousValue[@]}" "$value"
+                fi
 
                 # shellcheck disable=SC2068
                 if ! array::contains "$key" ${keys[@]+"${keys[@]}"}; then

@@ -40,14 +40,20 @@ unittest::case::repeat() {
     local result
 
     ini::parse ini "$(cat repeat.ini)"
+
+    # Duplicate sections are merged.
     ini::get result ini section
     [[ "${#result[@]}" -eq 3 ]] || return 1
     [[ "${result[0]}" == "key1" ]] || return 1
     [[ "${result[1]}" == "key2" ]] || return 1
     [[ "${result[2]}" == "key4" ]] || return 1
 
+    # Duplicated keys are changed to an array.
     ini::get result ini section key1
-    [[ "$result" == "value2" ]] || return 1
+    is::array result || return 1
+    [[ "${#result[@]}" -eq 2 ]] || return 1
+    [[ "${result[0]}" == "value1" ]] || return 1
+    [[ "${result[1]}" == "value2" ]] || return 1
 }
 
 unittest::case::torture() {

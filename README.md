@@ -101,7 +101,7 @@ Returns nothing
 
 Encode a prefix, section and key in order to generate a safe variable name for Bash. All section names and key names are case insensitive.
 
-* $1 - Prefix, required.
+* $1 - Prefix for environment variables, required.
 * $2 - Section, optional. Required if you want to access a key.
 * $3 - Key name, optional.
 
@@ -120,7 +120,14 @@ Variables are stored in memory, encoded in hex to ensure the variable names are 
     PREFIX_SECTIONENCODED=(array of unencoded key names)
     PREFIX_SECTIONENCODED_KEYENCODED=value
 
-You should not use these environment variables directly. Instead, use the other utility functions to access the values.
+Duplicted section names are merged together. Duplicated keys will have their values changed into an array so all of the values will be captured. For example, the INI on the left will be parsed into variables similar to the right side. Keep in mind that section names and keys are case insensitive.
+
+[Section1]       PREFIX=(SECTION1 SECTION2 Key=value kEy=value2       PREFIX_SECTION1=(KEY)
+
+[Section2]       PREFIX_SECTION2=(ANOTHER) another=value                   PREFIX_SECTION1_KEY=(value value2 value3)
+ [SECTION1] KEY=value3       PREFIX_SECTION2_ANOTHER=value
+
+You should not use the generated environment variables directly. Instead, use the other utility functions (eg. `ini::get`) to access the values.
 
       $1: Prefix for variables.
       $2: INI file contents
