@@ -123,15 +123,14 @@ ini::keyName() {
 #     $1: Prefix for variables.
 #     $2: INI file contents
 ini::parse() {
-    local encodedKey encodedSection key keys line oldIfs prefix previousValue section sections value
+    local encodedKey encodedSection key keys IFS line prefix previousValue section sections value
 
     prefix=$1
     sections=("")
     section=
     keys=()
-    ini::keyName encodedSection "$prefix" "$section"
-    oldIfs=$IFS
     IFS=$'\n'
+    ini::keyName encodedSection "$prefix" "$section"
 
     while read line; do
         string::trim line "$line"
@@ -186,8 +185,6 @@ ini::parse() {
             fi
         fi
     done <<< "$2"
-
-    IFS=$oldIfs
 
     # shellcheck disable=SC2068
     assign::array "$encodedSection" ${keys[@]+"${keys[@]}"}
