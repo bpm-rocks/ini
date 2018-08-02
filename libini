@@ -102,7 +102,7 @@ ini::keyName() {
 #   PREFIX_SECTIONENCODED=(array of unencoded key names)
 #   PREFIX_SECTIONENCODED_KEYENCODED=value
 #
-# Duplicted section names are merged together. Duplicated keys will have their
+# Duplicated section names are merged together. Duplicated keys will have their
 # values changed into an array so all of the values will be captured. For
 # example, the INI on the left will be parsed into variables similar to the
 # right side. Keep in mind that section names and keys are case insensitive.
