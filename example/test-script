@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 . bpm
-bpm::include ini
+. ../libini
 
 # Go to the script's folder
 cd "${0%/*}"
@@ -29,3 +29,8 @@ set | grep ^key1=
 ini::get key2 "$prefix" "section name" "Key 2"
 set | grep ^key2=
 # key2='value 2'
+
+# Generate the INI file again as a string
+ini::toString str "$prefix"
+echo "------ Written back out to a file -----"
+echo "$str"

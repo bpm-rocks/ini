@@ -15,7 +15,7 @@ unittest::case::get-key-list() {
     ini::get result ini test
     is::array result || return 1
     [[ "${#result[@]}" -eq 1 ]] || return 1
-    [[ "${result[0]}" == "item" ]]
+    [[ "${result[0]}" == "ITEM" ]]
 }
 
 unittest::case::get-duplicate-key() {
@@ -24,7 +24,9 @@ unittest::case::get-duplicate-key() {
     ini::parse ini "$(cat duplicate.ini)"
     ini::get result ini test item
     is::array result || return 1
-    return 0
-    [[ "${#result[@]}" -eq 1 ]] || return 1
-    [[ "${result[0]}" == "item" ]]
+    [[ "${#result[@]}" -eq 4 ]] || return 1
+    [[ "${result[0]}" == "candy" ]] || return 1
+    [[ "${result[1]}" == "beer" ]] || return 1
+    [[ "${result[2]}" == "fruit" ]] || return 1
+    [[ "${result[3]}" == "sandwiches" ]] || return 1
 }

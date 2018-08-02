@@ -26,11 +26,11 @@ unittest::case::simple() {
     ini::get result ini
     [[ "${#result[@]}" -eq 2 ]] || return 1
     [[ "${result[0]}" == "" ]] || return 1
-    [[ "${result[1]}" == "default" ]] || return 1
+    [[ "${result[1]}" == "DEFAULT" ]] || return 1
 
     ini::get result ini default
     [[ "${#result[@]}" -eq 1 ]] || return 1
-    [[ "${result[0]}" == "key" ]] || return 1
+    [[ "${result[0]}" == "KEY" ]] || return 1
 
     ini::get result ini default key
     [[ "$result" == "value" ]]
@@ -44,9 +44,9 @@ unittest::case::repeat() {
     # Duplicate sections are merged.
     ini::get result ini section
     [[ "${#result[@]}" -eq 3 ]] || return 1
-    [[ "${result[0]}" == "key1" ]] || return 1
-    [[ "${result[1]}" == "key2" ]] || return 1
-    [[ "${result[2]}" == "key4" ]] || return 1
+    [[ "${result[0]}" == "KEY1" ]] || return 1
+    [[ "${result[1]}" == "KEY2" ]] || return 1
+    [[ "${result[2]}" == "KEY4" ]] || return 1
 
     # Duplicated keys are changed to an array.
     ini::get result ini section key1

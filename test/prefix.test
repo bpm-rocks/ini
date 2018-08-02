@@ -4,23 +4,26 @@
 bpm::include unittest
 unittest::run
 
+# Resetting RANDOM=0 makes the next few random numbers very predictable.
+# 20034 24315 12703 22240 10073 18561 20058
+# Must be done within each test otherwise it won't work.
+
 unittest::setup() {
     . ../libini
-
-    # Resetting RANDOM=0 makes the next few random numbers very predictable.
-    # 20034 24315 12703 22240 10073 18561 20058
-    RANDOM=0
 }
 
 unittest::case::first-prefix() {
     local prefix
 
+    RANDOM=0
     ini::prefix prefix
     [[ "$prefix" == "ini_20034" ]]
 }
 
 unittest::case::second-prefix() {
     local prefix
+
+    RANDOM=0
 
     # Force a first level conflict
     ini_20034=true
@@ -30,6 +33,8 @@ unittest::case::second-prefix() {
 
 unittest::case::third-prefix() {
     local prefix
+
+    RANDOM=0
 
     # Force two collisions in a row
     # shellcheck disable=SC2034

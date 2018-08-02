@@ -123,7 +123,7 @@ ini::keyName() {
 #     $1: Prefix for variables.
 #     $2: INI file contents
 ini::parse() {
-    local encodedKey encodedSection key keys IFS line prefix previousValue section sections value
+    local encodedKey encodedSection key keys IFS line prefix previousValue section sections upper value
 
     prefix=$1
     sections=("")
@@ -149,11 +149,12 @@ ini::parse() {
 
             string::trim section "$line"
             ini::keyName encodedSection "$prefix" "$section"
+            string::toUpper upper "$section"
 
             # shellcheck disable=SC2068
-            if ! array::contains "$section" ${sections[@]+"${sections[@]}"}; then
+            if ! array::contains "$upper" ${sections[@]+"${sections[@]}"}; then
                 # Track the new section
-                sections[${#sections[@]}]=$section
+                sections[${#sections[@]}]=$upper
                 keys=()
             else
                 # Load the repeated section. Sorry for the eval.
@@ -178,9 +179,11 @@ ini::parse() {
                     assign::array "$encodedKey" "${previousValue[@]}" "$value"
                 fi
 
+                string::toUpper upper "$key"
+
                 # shellcheck disable=SC2068
-                if ! array::contains "$key" ${keys[@]+"${keys[@]}"}; then
-                    keys[${#keys[@]}]=$key
+                if ! array::contains "$upper" ${keys[@]+"${keys[@]}"}; then
+                    keys[${#keys[@]}]=$upper
                 fi
             fi
         fi
@@ -211,4 +214,52 @@ ini::prefix() {
     done
 
     local "$1" && assign::value "$1" "$prefix"
+}
+
+
+# Transfers the in-memory contents of the INI file back into a string.
+#
+# You will lose all of your comments that were in the INI file. The order of
+# the sections may not be preserved. The order of the keys may not be
+# preserved. Any values that were overwritten in the original INI file
+# shall be eliminated.
+#
+# Think of it as a cleansing to see what's really parsed instead of losing
+# data.
+#
+# $1 - Destination variable name for the string.
+# $2 - INI prefix
+#
+# Returns nothing.
+ini::toString() {
+    local key keys nl prefix result section sections value values
+
+    prefix=$2
+    nl=$'\n'
+    ini::get sections "$prefix"
+    for section in "${sections[@]}"; do
+        keys=()
+        ini::get keys "$prefix" "$section"
+
+        if [[ "${#keys[@]}" -gt 0 ]]; then
+            result="$result[$section]$nl"
+
+            for key in "${keys[@]}"; do
+                values=()
+                ini::get values "$prefix" "$section" "$key"
+
+                if is::array values; then
+                    for value in "${values[@]}"; do
+                        result="$result$key=$value$nl"
+                    done
+                else
+                    result="$result$key=$values$nl"
+                fi
+            done
+
+            result="$result$nl"
+        fi
+    done
+
+    local "$1" && assign::value "$1" "$result"
 }
