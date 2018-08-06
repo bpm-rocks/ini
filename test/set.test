@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+. bpm
+bpm::include unittest
+unittest::run
+
+unittest::setup() {
+    . ../libini
+}
+
+unittest::case::creates-empty-section() {
+    ini::set ini sectionName key value
+    [[ "${#ini[@]}" -eq 2 ]] || return 1
+    [[ "${ini[0]}" == "" ]] || return 1
+    [[ "${ini[1]}" == "SECTIONNAME" ]] || return 1
+}
+
+unittest::case::sets-value() {
+    local result
+
+    ini::set ini sectionName key value || return 1
+    ini::get result ini sectionName key || return 1
+    [[ "$result" == "value" ]]
+}

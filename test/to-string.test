@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+. bpm
+bpm::include unittest
+unittest::run
+
+unittest::setup() {
+    . ../libini
+}
+
+unittest::case::empty() {
+    local result
+
+    ini::parse ini ""
+    ini::toString result ini
+    [[ "$result" == "" ]]
+}
+
+unittest::case::simple() {
+    local result
+
+    ini::parse ini "$(cat to-string.ini)"
+    ini::toString result ini
+    [[ "$result" == $'ONE=1\nTWO=2\n\n[KEEP]\nTHREE=3\n\n' ]]
+}

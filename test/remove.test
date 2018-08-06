@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+. bpm
+bpm::include unittest
+unittest::run
+
+unittest::setup() {
+    . ../libini
+    ini::set ini "" key value || return 1
+    ini::set ini sectionName key value || return 1
+    ini::set ini sectionName key2 value2 || return 1
+    ini::set ini sectionName2 key value || return 1
+    ini::set ini sectionName2 key2 value2 || return 1
+    ini::set ini sectionName3 key value || return 1
+}
+
+unittest::case::removes-value() {
+    local result
+
+    ini::remove ini sectionName key2 || return 1
+    ini::toString result ini
+    [[ "$result" == $'KEY=value\n\n[SECTIONNAME]\nKEY=value\n\n[SECTIONNAME2]\nKEY=value\nKEY2=value2\n\n[SECTIONNAME3]\nKEY=value\n\n' ]]
+}
+
+unittest::case::removes-section() {
+    local result
+
+    ini::remove ini sectionName || return 1
+    ini::toString result ini
+    [[ "$result" == $'KEY=value\n\n[SECTIONNAME2]\nKEY=value\nKEY2=value2\n\n[SECTIONNAME3]\nKEY=value\n\n' ]]
+}
+
+unittest::case::removes-ini() {
+    local result
+
+    ini::remove ini || return 1
+    ini::toString result ini
+    [[ "$result" == "" ]]
+}
