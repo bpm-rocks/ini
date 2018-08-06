@@ -143,6 +143,33 @@ Generates a unique INI file prefix that has not yet been used.
 Returns nothing.
 
 
+`ini::remove()`
+---------------
+
+Removes a key from a section or a section from a loaded INI. Frees up memory by unsetting environment variables. If no section is specified, removes all of the INI from memory.
+
+* $1 - Prefix for environment variables, required.
+* $2 - Section name, optional.
+* $3 - Key name, optional.
+
+Returns nothing.
+
+
+`ini::set()`
+------------
+
+Assigns a value to a property
+
+This will set the value if it isn't already assigned. If it is assigned, it will add the value to the array in memory.
+
+* $1 - Prefix for environment variables, required.
+* $2 - Section name, required.
+* $3 - Key, required.
+* $4 - Value, required.
+
+Returns nothing.
+
+
 `ini::toString()`
 -----------------
 

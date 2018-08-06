@@ -61,7 +61,7 @@ ini::get() {
 }
 
 
-# Sets up a new, blank INI structure in memory.
+# Private: Sets up a new, blank INI structure in memory.
 #
 # Hardcode the empty section name as the first entry. Required to have a
 # single element and this also initializes the values.
