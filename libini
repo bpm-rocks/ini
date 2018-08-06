@@ -126,7 +126,7 @@ ini::parse() {
     local encodedKey encodedSection key keys IFS line prefix previousValue section sections upper value
 
     prefix=$1
-    sections=("")
+    sections=("") # Hardcode the emty section name as the first entry. Required.
     section=
     keys=()
     IFS=$'\n'
@@ -242,7 +242,11 @@ ini::toString() {
         ini::get keys "$prefix" "$section"
 
         if [[ "${#keys[@]}" -gt 0 ]]; then
-            result="$result[$section]$nl"
+            # Skipping the section name for root entries always works
+            # because it's always hardcoded as the first section name.
+            if [[ -n "$section" ]]; then
+                result="$result[$section]$nl"
+            fi
 
             for key in "${keys[@]}"; do
                 values=()
